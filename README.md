@@ -12,65 +12,88 @@ A web application's most common asynchronous operation is requesting data from a
 - I want my web application to show a Google map. I can request that map from the Google Maps API
 - I want my web application to find random pictures of dogs on the internet. I can request those images from the [dog api](https://dog.ceo/dog-api/)
 
-
 ## HTTP Request / Response Cycle (20 min)
 
-HTTP stands for **H**yper********t********ext **T**ransfer **P**rotocol. It is the standard for communication over the internet. (Well HTTPS, the “secure” version, is now the standard).
-
-![The client sends a request with a URL and a verb. The server responds with the status code and the message body](./images/http-request-response-cycle.png)
+HTTP stands for **H**yper**t**ext **T**ransfer **P**rotocol. It is the standard for communication over the internet. (Well HTTPS, the “secure” version, is now the standard).
 
 The HTTP Request/Response cycle is the pattern of communication used by two computers communicating using the HTTP protocol. It works like this:
 
 * The program/computer making the request is the **client**
+  * The client must initiate a request. A server can’t reach out and send Responses  to clients on its own. It just waits for incoming requests.
 * That program/computer responding to the request is called the **server**
+  * The server must already be up and running and ready to accept incoming requests.
+
+![The client sends a request with a URL and a verb. The server responds with the status code and the message body](./images/http-request-response-cycle.png)
+
 * The request and response sent between the client and server each contain important information including:
   * The **request URL** of the specific requested resource
   * The **request verb** — what it wants the server to do (post something new, send back some data, update or delete something)
   * The **response status code** (did the request succeed?)
   * The **response body** (the data sent back to the client)
 
-In order for this to work
-
-- The server must already be up and running and ready to accept incoming requests.
-- The client must initiate a request. A server can’t reach out and send Responses  to clients on its own. It just waits for incoming requests.
-
 ## The `fetch()` function
 
 `fetch()` is a browser-native function that sends a request to a server. (it's coming to Node soon too!)
 
-At minimum, it takes in a URL of the API whose data we want to access and returns a `Promise`. For the vast majority of the time, it will look like this:
+At minimum, it takes in a URL of the API whose data we want to access. It is assumed that the request verb is **GET**. `fetch()` returns a `Promise` containing the **HTTP Response** ([MDN](https://dog.ceo/api/breeds/image/random)).
 
 ```jsx
-const fetchPromise = fetch('https://pokeapi.co/api/v2/pokemon/pikachu');
-
-fetchPromise
-	.then((response) => response.json())
-	.then((jsonData) => doSomethingWith(jsonData))
-	.catch((error) => console.error(error.message))
-```
-
-- `fetch` takes in a URL of a resource that we want to request. Here we are using the API https://pokeapi.co/ and the specific “endpoint” https://pokeapi.co/api/v2/pokemon/pikachu
-- Try these other API endpoints:
-  - https://dog.ceo/api/breeds/image/random
-  - https://api.sunrise-sunset.org/json?lat=36.7201600&lng=-4.4203400&date=2023-3-15
-  - https://v2.jokeapi.dev/joke/Programming
-- `fetch` returns a promise that will resolve to a [Response object](https://developer.mozilla.org/en-US/docs/Web/API/Response) which contains information about the HTTP response (more on that next).
-- The `response` object has a `.json()` method which parses the body of the response as JSON. This is also asynchronous and returns another promise.
-- Once the data is parsed, we can then use it (print it, render it, etc…)
-- We catch any errors that may occur (it will be an `Error` object so in this example, we print out the `.message`)
-
-```jsx
-const fetchPromise = fetch('https://pokeapi.co/api/v2/pokemon/pikachu');
+const fetchPromise = fetch('https://dog.ceo/api/breeds/image/random');
 
 fetchPromise.then((response) => {
 	console.log(response.url)	
 	console.log(response.ok)
 	console.log(response.status)
-	console.log(response)
+	console.log(response.body)
 });
 ```
 
-### HTTP Status Codes
+Here we are using the API from https://dog.ceo/ and the specific “endpoint” URL https://dog.ceo/api/breeds/image/random. Try these other APIs/endpoints:
+- https://pokeapi.co/api/v2/pokemon/pikachu
+- https://api.sunrise-sunset.org/json?lat=36.7201600&lng=-4.4203400&date=2023-3-15
+- https://v2.jokeapi.dev/joke/Programming
+
+`fetch()` returns a Promise whose resulting value is the `response` object. The `response` object's `url`, `ok` and `status` properties are all useful information. The `ok` and `status` properties immediately tell us if our request was successful.
+
+However, the `response.body` is a `ReadableStream` object. In order for us to access the data in that stream, we need to do something else.
+
+## Parsing the request body
+
+99% of the time, your `fetch()` code is going to look like this:
+
+```jsx
+const fetchPromise = fetch('https://dog.ceo/api/breeds/image/random');
+
+fetchPromise
+	.then((response) => {
+    const jsonParsingPromise = response.json();
+    return jsonParsingPromise;
+  })
+	.then((jsonData) => {
+    doSomethingWith(jsonData);
+  })
+	.catch((error) => {
+    console.error(error.message);
+  });
+```
+
+- The `response` object has a `.json()` method which parses the body of the response as JSON. 
+- **`response.json()` is also asynchronous** and returns a Promise that resolves to the response body.
+- Once the data is parsed, we can then use it (print it, render it, etc…)
+- We catch any errors that may occur (it will be an `Error` object so in this example, we print out the `.message`)
+
+## More succinctly
+
+```js
+const fetchPromise = fetch('https://dog.ceo/api/breeds/image/random');
+
+fetchPromise
+	.then((response) => response.json())
+	.then((jsonData) => doSomethingWith(jsonData))
+	.catch((error) => console.error(error.message););
+```
+
+## HTTP Status Codes
 
 Every Response that we receive from a server will include a status code indicating how the request was processed. Was the resource found and returned? Was the resource not found? What there an error? Did the POST request successfully create a new resource? 
 
@@ -84,7 +107,7 @@ Responses are grouped in five classes:
 
 Important ones to know are 200, 201, 204, 404, and 500
 
-### URLs
+## URLs
 
 Every URL has a few parts. Understanding those parts can help us fetch precisely the data we want.
 
