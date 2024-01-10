@@ -41,10 +41,10 @@ At minimum, it takes in a URL of the API whose data we want to access. It is ass
 const fetchPromise = fetch('https://dog.ceo/api/breeds/image/random');
 
 fetchPromise.then((response) => {
-	console.log(response.url)	
-	console.log(response.ok)
-	console.log(response.status)
-	console.log(response.body)
+  console.log(response.url)	
+  console.log(response.ok)
+  console.log(response.status)
+  console.log(response.body)
 });
 ```
 
@@ -65,14 +65,14 @@ However, the `response.body` is a `ReadableStream` object. In order for us to ac
 const fetchPromise = fetch('https://dog.ceo/api/breeds/image/random');
 
 fetchPromise
-	.then((response) => {
+  .then((response) => {
     const jsonParsingPromise = response.json();
     return jsonParsingPromise;
   })
-	.then((jsonData) => {
+  .then((jsonData) => {
     doSomethingWith(jsonData);
   })
-	.catch((error) => {
+  .catch((error) => {
     console.error(error.message);
   });
 ```
@@ -88,9 +88,9 @@ fetchPromise
 const fetchPromise = fetch('https://dog.ceo/api/breeds/image/random');
 
 fetchPromise
-	.then((response) => response.json())
-	.then((jsonData) => doSomethingWith(jsonData))
-	.catch((error) => console.error(error.message););
+  .then((response) => response.json())
+  .then((jsonData) => doSomethingWith(jsonData))
+  .catch((error) => console.error(error.message));
 ```
 
 ## HTTP Status Codes
@@ -147,12 +147,12 @@ The default behavior of using `fetch` is to make a `GET` request, but we can als
 
 ```jsx
 const options = {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(myData)
-  }
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(myData)
+}
 fetch(url, options)
   .then(response => response.json())
   .catch(console.error)
