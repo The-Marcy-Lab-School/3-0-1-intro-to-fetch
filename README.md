@@ -146,19 +146,30 @@ This HTTP verb or “method” is sent in the HTTP Request so that the server kn
 The default behavior of using `fetch` is to make a `GET` request, but we can also make other kinds of requests by adding a second `options` argument to `fetch()`:
 
 ```jsx
+const newUser = { name: "morpheus", job: "leader" };
+
 const options = {
   method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(myData)
+  body: JSON.stringify(newUser),
+  headers: { "Content-Type": "application/json" },
 }
-fetch(url, options)
-  .then(response => response.json())
-  .then(data => {
-    console.log(data)
+
+// This is a good API to practice GET/POST/PATCH/DELETE requests
+const promise = fetch('https://reqres.in/api/users', options)
+
+promise
+  .then((response) => response.json())
+  .then((data) => {
+    console.log(data);
   })
-  .catch(console.error)
+  .catch((error) => {
+    console.log(`${error.name}: ${error.message}`);
+  })
 ```
 
-Most of this is also boilerplate (its mostly the same each time). The `method` determines the kind of request, the `headers` determines the type of data we are sending to the server (JSON), and the `body` determines *****what***** we send to the server. Note that it must be stringified first.  
+Most of this is also boilerplate (its mostly the same each time): 
+* The `method` determines the kind of request
+* The `headers` determines the type of data we are sending to the server (JSON)
+* The `body` determines **what** we send to the server. Note that it must be `JSON.stringify()`-ed first.
+
+The url used here is from https://reqres.in which is a great "dummy" API that you can use to practice making various kinds of fetch requests.
