@@ -37,10 +37,33 @@ const getJoke = () => {
     })
 }
 
+const postUser = () => {
+  const newUser = { name: "morpheus", job: "leader" };
+
+  const options = {
+    method: "POST",
+    body: JSON.stringify(newUser),
+    headers: {
+      "Content-Type": "application/json",
+    }
+  }
+
+  fetch('https://reqres.in/api/users', options)
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data);
+      // do something with the data
+    })
+    .catch((error) => {
+      console.error(`${error.name}: ${error.message}`)
+    })
+}
+
 const main = () => {
   getAndRenderRandomDog();
   getPikachuData();
   getJoke();
+  postUser();
 }
 
 main();
