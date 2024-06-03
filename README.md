@@ -115,8 +115,8 @@ fetch('https://dog.ceo/api/breeds/image/random')
     }
 
     // We can return a promise from `.then` to create a chain of `.then`s
-    return response.json())
-  }
+    return response.json()
+  })
   .then((responseData) => {
       console.log("Here is your data:", responseData);
       // do something with the response data
@@ -132,21 +132,23 @@ Since fetching involves two promises, we should be aware of what can cause those
 * `response.json()` rejects when the `response` body is in a format other than JSON (which we aren't yet equipped to utilize)
 
 ```js
-fetch('https://dog.ceo/api/breeds/image/random')
-  .then((response) => {
-    if (!response.ok) {
-      return console.log(`Fetch failed. ${response.status} ${response.statusText}`)
-    }
-    return response.json())
-  }
-  .then((responseData) => {
-      console.log("Here is your data:", responseData);
-      // do something with the response data
-  });
-  .catch((error) => {
-    console.log("Error caught!");
-    console.error(error.message));
-  }
+
+ fetch('https://dog.ceo/api/breeds/image/random')
+   .then((response) => {
+     if (!response.ok) {
+       return console.log(`Fetch failed. ${response.status} ${response.statusText}`)
+     }
+     return response.json()
+   })
+   .then((responseData) => {
+       console.log("Here is your data:", responseData);
+       // do something with the response data
+   })
+   .catch((error) => {
+     console.log("Error caught!");
+     console.error(error.message);
+   })
+
 ```
 
 * When chaining together multiple promises, if either of the Promises returned by `fetch()` or `response.json()` reject, both can be handled by a single `.catch()`:
