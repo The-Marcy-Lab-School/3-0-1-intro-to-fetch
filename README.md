@@ -33,65 +33,124 @@ The HTTP Request/Response cycle is the pattern of communication used by two comp
 
 ## The `fetch()` function
 
-`fetch()` is a browser-native function that sends a request to a server. (it's coming to Node soon too!)
-
-At minimum, it takes in a URL of the API whose data we want to access. It is assumed that the request verb is **GET**. `fetch()` returns a `Promise` containing the **HTTP Response** ([MDN](https://dog.ceo/api/breeds/image/random)).
+`fetch(url)` is a function that sends a request to a server. 
+* It is available in browsers and in Node!
+* Its only required argument is a URL of the API whose data we want to access.
+* It is assumed that the request verb is **GET**.
+* `fetch()` returns a `Promise` containing the **HTTP Response**.
 
 ```jsx
 const fetchPromise = fetch('https://dog.ceo/api/breeds/image/random');
+console.log("look, its a promise!:", fetchPromise);
 
 fetchPromise.then((response) => {
   console.log(response.url)	
   console.log(response.ok)
   console.log(response.status)
+  console.log(response.statusText)
   console.log(response.body)
 });
 ```
 
-Here we are using the API from https://dog.ceo/ and the specific “endpoint” URL https://dog.ceo/api/breeds/image/random. Try these other APIs/endpoints:
-- https://pokeapi.co/api/v2/pokemon/pikachu
-- https://api.sunrise-sunset.org/json?lat=36.7201600&lng=-4.4203400&date=2023-3-15
-- https://v2.jokeapi.dev/joke/Programming
-
-`fetch()` returns a Promise whose resulting value is the `response` object. The `response` object's `url`, `ok` and `status` properties are all useful information. The `ok` and `status` properties immediately tell us if our request was successful.
-
-However, the `response.body` is a `ReadableStream` object. In order for us to access the data in that stream, we need to do something else.
-
-## Parsing the request body
-
-99% of the time, your `fetch()` code is going to look like this:
+`fetch()` returns a Promise whose resulting value is the `response` object. The `response` object's `url`, `ok` and `status` properties are all useful information. The `ok` and `status` properties immediately tell us if our request was successful and, if not, why.
 
 ```jsx
 const fetchPromise = fetch('https://dog.ceo/api/breeds/image/random');
 
-fetchPromise
+fetchPromise.then((response) => {
+  if (!response.ok) {
+    return console.log(`Failed response. ${response.status} ${response.statusText}`)
+  }
+  console.log(`The request to ${response.url} was successful!`);
+  console.log("Here is your data:", response.body);
+});
+```
+
+However, the `response.body` is a `ReadableStream` object. We need to do something else to access the data in that stream.
+
+## Parsing the response body
+
+To access the data from the `response` body, we need to parse it, which is another asynchronous operation. Below, you'll see how we've nested these asynchronous operations:
+
+```jsx
+// 1. Perform the fetch
+fetch('https://dog.ceo/api/breeds/image/random')
   .then((response) => {
-    const jsonParsingPromise = response.json();
-    return jsonParsingPromise;
+    // 2. Check if the response is ok before proceeding
+    if (!response.ok) {
+      return console.log(`Failed response. ${response.status} ${response.statusText}`)
+    }
+
+    // This log isn't necessary but its nice for testing
+    console.log(`The request to ${response.url} was successful!`);
+
+    // 3. Parse the body of the response. `response.json()` also returns a Promise that we should handle using `.then`
+    response.json()
+      .then((responseData) => {
+          console.log("Here is your data:", responseData);
+          // 4. Render the data to the screen using DOM manipulation
+      });
   })
-  .then((jsonData) => {
-    doSomethingWith(jsonData);
-  })
-  .catch((error) => {
-    console.error(error.message);
-  });
 ```
 
 - The `response` object has a `.json()` method which parses the body of the response as JSON. 
 - **`response.json()` is also asynchronous** and returns a Promise that resolves to the response body.
 - Once the data is parsed, we can then use it (print it, render it, etc…)
-- We catch any errors that may occur (it will be an `Error` object so in this example, we print out the `.message`)
 
-## More succinctly
+Here we are using the API from https://dog.ceo/ and the specific “endpoint” URL https://dog.ceo/api/breeds/image/random. Try these other APIs:
+- https://dog.ceo/api/breed/hound/images
+- https://pokeapi.co/api/v2/pokemon/pikachu
+- https://v2.jokeapi.dev/joke/Programming
+- https://api.sunrise-sunset.org/json?lat=36.7201600&lng=-4.4203400&date=2023-3-15
+
+## Avoid Nesting, Use Chaining Instead
+
+Rather than nesting the promise handling, we often will chain them together instead:
 
 ```js
-const fetchPromise = fetch('https://dog.ceo/api/breeds/image/random');
+fetch('https://dog.ceo/api/breeds/image/random')
+  .then((response) => {
+    if (!response.ok) {
+      return console.log(`Failed response. ${response.status} ${response.statusText}`)
+    }
 
-fetchPromise
-  .then((response) => response.json())
-  .then((jsonData) => doSomethingWith(jsonData))
-  .catch((error) => console.error(error.message));
+    // We can return a promise from `.then` to create a chain of `.then`s
+    return response.json())
+  }
+  .then((responseData) => {
+      console.log("Here is your data:", responseData);
+      // do something with the response data
+  });
 ```
+
+## Handling Rejected Promises
+
+Remember that all Promises invoke either `resolve()` or `reject()`. Resolved Promises cause the `.then` callback to be invoked while rejected Promises cause the `catch()` callback to be invoked.
+
+Since fetching involves two promises, we should be aware of what can cause those rejections:
+* A `fetch()` promise only rejects when the request fails, for example, because of a badly-formed request URL or a network error.
+* `response.json()` rejects when the `response` body is in a format other than JSON (which we aren't yet equipped to utilize)
+
+```js
+fetch('https://dog.ceo/api/breeds/image/random')
+  .then((response) => {
+    if (!response.ok) {
+      return console.log(`Fetch failed. ${response.status} ${response.statusText}`)
+    }
+    return response.json())
+  }
+  .then((responseData) => {
+      console.log("Here is your data:", responseData);
+      // do something with the response data
+  });
+  .catch((error) => {
+    console.log("Error caught!");
+    console.error(error.message));
+  }
+```
+
+* When chaining together multiple promises, if either of the Promises returned by `fetch()` or `response.json()` reject, both can be handled by a single `.catch()`:
+* Note that A `fetch()` promise does not reject if the server responds with HTTP status codes that indicate errors (404, 504, etc...).
 
 ## HTTP Status Codes
 
@@ -155,19 +214,24 @@ const options = {
 }
 
 // This is a good API to practice GET/POST/PATCH/DELETE requests
-const promise = fetch('https://reqres.in/api/users', options)
-
-promise
-  .then((response) => response.json())
-  .then((data) => {
-    console.log(data);
-  })
+fetch('https://reqres.in/api/users', options)
+  .then((response) => {
+    if (!response.ok) {
+      return console.log(`Fetch failed. ${response.status} ${response.statusText}`)
+    }
+    return response.json())
+  }
+  .then((responseData) => {
+      console.log("Here is your data:", responseData);
+      // do something with the response data
+  });
   .catch((error) => {
-    console.log(`${error.name}: ${error.message}`);
-  })
+    console.log("Error caught!");
+    console.error(error.message));
+  }
 ```
 
-Most of this is also boilerplate (its mostly the same each time): 
+Most of the `options` object is boilerplate (it's mostly the same each time): 
 * The `method` determines the kind of request
 * The `headers` determines the type of data we are sending to the server (JSON)
 * The `body` determines **what** we send to the server. Note that it must be `JSON.stringify()`-ed first.
