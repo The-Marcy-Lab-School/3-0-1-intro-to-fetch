@@ -1,6 +1,6 @@
 # Fetch
 
-## Cross-Application Communication (20 min)
+## Cross-Application Communication
 
 Okay now we’re really getting somewhere. So far we’ve been writing programs that consist ENTIRELY of code that we write (or download via npm). Now, we will enter the world of 
 
@@ -12,7 +12,7 @@ A web application's most common asynchronous operation is requesting data from a
 - I want my web application to show a Google map. I can request that map from the Google Maps API
 - I want my web application to find random pictures of dogs on the internet. I can request those images from the [dog api](https://dog.ceo/dog-api/)
 
-## HTTP Request / Response Cycle (20 min)
+## HTTP Request / Response Cycle
 
 HTTP stands for **H**yper**t**ext **T**ransfer **P**rotocol. It is the standard for communication over the internet. (Well HTTPS, the “secure” version, is now the standard).
 
