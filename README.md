@@ -1,5 +1,17 @@
 # Fetch
 
+- [Cross-Application Communication](#cross-application-communication)
+- [HTTP Request / Response Cycle](#http-request--response-cycle)
+- [The `fetch()` function](#the-fetch-function)
+  - [Parsing the response body](#parsing-the-response-body)
+  - [Avoid Nesting, Use Chaining Instead](#avoid-nesting-use-chaining-instead)
+  - [Handling Rejected Promises](#handling-rejected-promises)
+- [Digging Deeper into Fetching](#digging-deeper-into-fetching)
+  - [HTTP Status Codes](#http-status-codes)
+  - [URL Structure](#url-structure)
+  - [Kinds of Requests - HTTP Verbs](#kinds-of-requests---http-verbs)
+
+
 ## Cross-Application Communication
 
 Okay now we’re really getting somewhere. So far we’ve been writing programs that consist ENTIRELY of code that we write (or download via npm). Now, we will enter the world of 
@@ -32,6 +44,8 @@ The HTTP Request/Response cycle is the pattern of communication used by two comp
   * The **response body** (the data sent back to the client)
 
 ## The `fetch()` function
+
+> Try using this code in `fetchNewDog` function found in the `0-fetching-demo-start/js/event-helpers.js` file
 
 `fetch(url)` is a function that sends a request to a server. 
 * It is available in browsers and in Node!
@@ -68,7 +82,7 @@ fetchPromise.then((response) => {
 
 However, the `response.body` is a `ReadableStream` object. We need to do something else to access the data in that stream.
 
-## Parsing the response body
+### Parsing the response body
 
 To access the data from the `response` body, we need to parse it, which is another asynchronous operation. Below, you'll see how we've nested these asynchronous operations:
 
@@ -103,7 +117,7 @@ Here we are using the API from https://dog.ceo/ and the specific “endpoint” 
 - https://v2.jokeapi.dev/joke/Programming
 - https://api.sunrise-sunset.org/json?lat=36.7201600&lng=-4.4203400&date=2023-3-15
 
-## Avoid Nesting, Use Chaining Instead
+### Avoid Nesting, Use Chaining Instead
 
 Rather than nesting the promise handling, we often will chain them together instead:
 
@@ -115,6 +129,7 @@ fetch('https://dog.ceo/api/breeds/image/random')
     }
 
     // We can return a promise from `.then` to create a chain of `.then`s
+    // The next `.then` callback will receive the resolved value of this Promise
     return response.json()
   })
   .then((responseData) => {
@@ -123,7 +138,13 @@ fetch('https://dog.ceo/api/breeds/image/random')
   });
 ```
 
-## Handling Rejected Promises
+This works because `.then` will returns a Promise that resolves to the value its callback returns. 
+
+If the `.then` callback itself returns a Promise, the promise returned by `.then` will be the same Promise returned by its callback.
+
+In other words, `.then` will first check to see what the callback returns. If it is a non-Promise value, it will wrap that value in a Promise. If it is a Promise, it will just return that Promise.
+
+### Handling Rejected Promises
 
 Remember that all Promises will either resolve or reject. Resolved Promises trigger the `.then` callback to be invoked while rejected Promises trigger the `catch()` callback to be invoked.
 
@@ -134,22 +155,21 @@ Since fetching involves two promises (fetching first, then parsing the response 
 When chaining together multiple promises, if either of the Promises returned by `fetch()` or `response.json()` reject, both can be handled by a single `.catch()`:
 
 ```js
- fetch('https://dog.ceo/api/breeds/image/random')
-   .then((response) => {
-     if (!response.ok) {
-       return console.log(`Fetch failed. ${response.status} ${response.statusText}`)
-     }
-     return response.json()
-   })
-   .then((responseData) => {
-       console.log("Here is your data:", responseData);
-       // do something with the response data
-   })
-   .catch((error) => {
-     console.log("Error caught!");
-     console.error(error.message);
-   })
-
+fetch('https://dog.ceo/api/breeds/image/random')
+  .then((response) => {
+    if (!response.ok) {
+      return console.log(`Fetch failed. ${response.status} ${response.statusText}`)
+    }
+    return response.json()
+  })
+  .then((responseData) => {
+      console.log("Here is your data:", responseData);
+      // do something with the response data
+  })
+  .catch((error) => {
+    console.log("Error caught!");
+    console.error(error.message);
+  })
 ```
 
 * Note that A `fetch()` promise does not reject if the server responds with HTTP status codes that indicate errors (404, 504, etc...).
