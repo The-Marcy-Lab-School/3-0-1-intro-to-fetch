@@ -125,14 +125,15 @@ fetch('https://dog.ceo/api/breeds/image/random')
 
 ## Handling Rejected Promises
 
-Remember that all Promises invoke either `resolve()` or `reject()`. Resolved Promises cause the `.then` callback to be invoked while rejected Promises cause the `catch()` callback to be invoked.
+Remember that all Promises will either resolve or reject. Resolved Promises trigger the `.then` callback to be invoked while rejected Promises trigger the `catch()` callback to be invoked.
 
-Since fetching involves two promises, we should be aware of what can cause those rejections:
-* A `fetch()` promise only rejects when the request fails, for example, because of a badly-formed request URL or a network error.
-* `response.json()` rejects when the `response` body is in a format other than JSON (which we aren't yet equipped to utilize)
+Since fetching involves two promises (fetching first, then parsing the response body), we should be aware of what can cause those rejections:
+* A `fetch()` Promise rejects when the request itself fails. For example, the URL might be malformed (`hxxp://example.com`) or there is a network error (you don't have internet). This is different from the response errors you might get depending on the [HTTP status code](#http-status-codes)
+* A `response.json()` Promise rejects when the `response` body is NOT in JSON format and therefore cannot be parsed.
+
+When chaining together multiple promises, if either of the Promises returned by `fetch()` or `response.json()` reject, both can be handled by a single `.catch()`:
 
 ```js
-
  fetch('https://dog.ceo/api/breeds/image/random')
    .then((response) => {
      if (!response.ok) {
@@ -151,10 +152,13 @@ Since fetching involves two promises, we should be aware of what can cause those
 
 ```
 
-* When chaining together multiple promises, if either of the Promises returned by `fetch()` or `response.json()` reject, both can be handled by a single `.catch()`:
 * Note that A `fetch()` promise does not reject if the server responds with HTTP status codes that indicate errors (404, 504, etc...).
+  * You can see that the `!response.ok` guard clause will execute when you send a request to an API url that doesn't exist (try removing the `/random` part of the URL)
+  * However, if you mess up the URL (replace `http` with `hxxp`) then an error is thrown and the `.catch()` callback will be executed
 
-## HTTP Status Codes
+## Digging Deeper into Fetching
+
+### HTTP Status Codes
 
 Every Response that we receive from a server will include a status code indicating how the request was processed. Was the resource found and returned? Was the resource not found? What there an error? Did the POST request successfully create a new resource? 
 
@@ -168,7 +172,7 @@ Responses are grouped in five classes:
 
 Important ones to know are 200, 201, 204, 404, and 500
 
-## URLs
+### URL Structure
 
 Every URL has a few parts. Understanding those parts can help us fetch precisely the data we want.
 
@@ -186,7 +190,7 @@ Let's break it down:
 
 When using a new API, make sure to look at that APIs [documentation](https://api.sunrise-sunset.org/) (often found at the host address) to understand how to format the request URL.
 
-## Kinds of Requests - HTTP Verbs
+### Kinds of Requests - HTTP Verbs
 
 HTTP requests can be made for a variety of purposes. Consider these examples related to Instagram:
 
@@ -210,32 +214,37 @@ The default behavior of using `fetch` is to make a `GET` request, but we can als
 const newUser = { name: "morpheus", job: "leader" };
 
 const options = {
-  method: "POST",
-  body: JSON.stringify(newUser),
-  headers: { "Content-Type": "application/json" },
+  method: "POST",                      // The type of HTTP request
+  body: JSON.stringify(newUser),       // The data to be sent to the API
+  headers: {
+    "Content-Type": "application/json" // The format of the body's data
+  }  
 }
 
 // This is a good API to practice GET/POST/PATCH/DELETE requests
-fetch('https://reqres.in/api/users', options)
+const url = 'https://reqres.in/api/users';
+
+// Notice that the options object is provided as the second arg
+fetch(url, options)
   .then((response) => {
     if (!response.ok) {
       return console.log(`Fetch failed. ${response.status} ${response.statusText}`)
     }
-    return response.json())
-  }
+    return response.json();
+  })
   .then((responseData) => {
+      // A POST request will return the object created with an id and a createdAt timestamp
       console.log("Here is your data:", responseData);
-      // do something with the response data
-  });
+  })
   .catch((error) => {
     console.log("Error caught!");
-    console.error(error.message));
-  }
+    console.error(error.message);
+  })
 ```
 
 Most of the `options` object is boilerplate (it's mostly the same each time): 
 * The `method` determines the kind of request
-* The `headers` determines the type of data we are sending to the server (JSON)
 * The `body` determines **what** we send to the server. Note that it must be `JSON.stringify()`-ed first.
+* The `headers` object provides meta-data about the request. It can provide many pieces of information but here all we need to share is the format of the data we are sending to the API.
 
 The url used here is from https://reqres.in which is a great "dummy" API that you can use to practice making various kinds of fetch requests.
