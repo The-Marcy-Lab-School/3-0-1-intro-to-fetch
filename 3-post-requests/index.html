@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Fetching App</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1>My Fetching App</h1>
+      <section id="post-container">
+        <form id="new-user-form">
+          <h2>Create a New User</h2>
+          <div>
+            <label for="username">Name</label>
+            <input type="text" id="username" name="username">
+          </div>
+          <div>
+            <label for="job">Job</label>
+            <input type="text" id="job" name="job">
+          </div>
+          <button>Create New User</button>
+        </form>
+        <ul class="data-container">
+        </ul>
+      </section>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
